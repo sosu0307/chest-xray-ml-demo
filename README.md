@@ -22,4 +22,4 @@ End-to-end ML demo project: training + evaluation + decision thresholding + Grad
 ![Grad-CAM](docs/screenshots/03_gradcam_overlay.png)
 
 **Model Comparison / Training Curves**  
-![Comparison](docs/screenshots/04_model_comparison.png)
+![Comparison](docs/screenshots/04_training_curves.png)
