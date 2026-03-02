@@ -11,4 +11,15 @@ End-to-end ML demo project: training + evaluation + decision thresholding + Grad
 - **Demo App:** Streamlit app with sample images / upload and threshold slider
 - **Artifacts:** CSV exports for probabilities/results (optional)
 
-## Repo structure
+## Demo (Streamlit)
+![Overview](docs/screenshots/01_overview.png)
+
+### Key pages
+**Inference (Threshold demo)**  
+![Inference](docs/screenshots/02_inference_threshold.png)
+
+**Grad-CAM (Explainability)**  
+![Grad-CAM](docs/screenshots/03_gradcam_overlay.png)
+
+**Model Comparison / Training Curves**  
+![Comparison](docs/screenshots/04_training_curves.png)
