@@ -1,5 +1,0 @@
-true_class,filename,abs_path,prob_covid,distance
-covid,COVID-1310.png,/media/hib/3513A5BE4CA330AD/Projects/nov25_bds_int_covid1/data_bin/test/covid/images/COVID-1310.png,0.398070365190506,0.0019296348094940408
-covid,COVID-486.png,/media/hib/3513A5BE4CA330AD/Projects/nov25_bds_int_covid1/data_bin/test/covid/images/COVID-486.png,0.4033163487911224,0.003316348791122359
-noncovid,Lung_Opacity-3847.png,/media/hib/3513A5BE4CA330AD/Projects/nov25_bds_int_covid1/data_bin/test/noncovid/images/Lung_Opacity-3847.png,0.3995606601238251,0.00043933987617494896
-noncovid,Lung_Opacity-2481.png,/media/hib/3513A5BE4CA330AD/Projects/nov25_bds_int_covid1/data_bin/test/noncovid/images/Lung_Opacity-2481.png,0.4005959928035736,0.0005959928035735862
