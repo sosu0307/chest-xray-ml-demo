@@ -7,11 +7,6 @@ from PIL import Image
 from torchvision import models, transforms
 
 # =========================================================
-# Page config
-# =========================================================
-st.set_page_config(page_title="Inference Demo", layout="wide")
-
-# =========================================================
 # Paths (robust for src/streamlit/pages/)
 # =========================================================
 CURRENT_FILE = Path(__file__).resolve()
@@ -480,7 +475,7 @@ else:
             pred = "covid" if prob >= threshold else "noncovid"
             ok = pred == true_cls
 
-            st.image(img, use_container_width=True, caption=r["filename"])
+            st.image(img, use_column_width=True, caption=r["filename"])
 
             chip_html = (
                 "<span class='status-chip chip-ok'>Match</span>"

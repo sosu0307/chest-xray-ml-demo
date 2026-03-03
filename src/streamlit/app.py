@@ -2,7 +2,22 @@ from pathlib import Path
 import streamlit as st
 
 # Nur hier page config setzen
-st.set_page_config(page_title="ML Project Presentation", layout="wide")
+st.set_page_config(page_title="ML Project Presentation")
+
+st.markdown(
+    """
+<style>
+/* Make main content truly wide */
+.block-container {
+  max-width: 100% !important;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-top: 1.2rem;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 APP_DIR = Path(__file__).resolve().parent  # src/streamlit
 

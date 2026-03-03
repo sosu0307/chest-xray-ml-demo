@@ -9,11 +9,6 @@ from PIL import Image
 from torchvision import models, transforms
 import matplotlib.pyplot as plt
 
-# =========================================================
-# Page config (MUST be first Streamlit command)
-# =========================================================
-st.set_page_config(page_title="Grad-CAM Demo", layout="wide")
-
 # ---------------------------------------------------------
 # Paths / config
 # ---------------------------------------------------------
@@ -435,7 +430,7 @@ with s1:
     st.markdown(
         "<span class='badge badge-blue'>COVID sample</span>", unsafe_allow_html=True
     )
-    st.image(c_img, use_container_width=False, width=260)
+    st.image(c_img, width=260)
     st.markdown(
         f"<div class='sample-caption'>{COVID_IMG_PATH.name} (covid)</div>",
         unsafe_allow_html=True,
@@ -457,7 +452,7 @@ with s2:
     st.markdown(
         "<span class='badge badge-gray'>Non-COVID sample</span>", unsafe_allow_html=True
     )
-    st.image(n_img, use_container_width=False, width=260)
+    st.image(n_img, width=260)
     st.markdown(
         f"<div class='sample-caption'>{NONCOVID_IMG_PATH.name} (noncovid)</div>",
         unsafe_allow_html=True,
@@ -518,20 +513,20 @@ v1, v2, v3 = st.columns(3, gap="large")
 with v1:
     st.markdown("<div class='result-panel'>", unsafe_allow_html=True)
     st.markdown("<div class='panel-title'>Original</div>", unsafe_allow_html=True)
-    st.image(orig, use_container_width=True)
+    st.image(orig, use_column_width=380)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with v2:
     st.markdown("<div class='result-panel'>", unsafe_allow_html=True)
     st.markdown("<div class='panel-title'>Heatmap</div>", unsafe_allow_html=True)
     heat_rgb = (plt.get_cmap("jet")(heatmap)[..., :3] * 255).astype(np.uint8)
-    st.image(heat_rgb, use_container_width=True)
+    st.image(heat_rgb, use_column_width=380)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with v3:
     st.markdown("<div class='result-panel'>", unsafe_allow_html=True)
     st.markdown("<div class='panel-title'>Overlay</div>", unsafe_allow_html=True)
-    st.image(overlay, use_container_width=True)
+    st.image(overlay, use_column_width=380)
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------

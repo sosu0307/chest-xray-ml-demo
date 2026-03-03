@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-st.set_page_config(page_title="Model Comparison", layout="wide")
+st.title("Model Comparison")
 
 # =========================================================
 # Paths (robust if script is inside src/streamlit/pages/)

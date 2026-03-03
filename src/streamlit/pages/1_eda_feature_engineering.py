@@ -14,7 +14,7 @@ from PIL import Image
 # =========================================================
 # PAGE CONFIG
 # =========================================================
-st.set_page_config(page_title="COVID-19 X-ray Feature Pipeline", layout="wide")
+st.title("COVID-19 X-ray Feature Pipeline")
 
 # =========================================================
 # STYLE
@@ -512,7 +512,9 @@ if page == "intro":
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     c_plot, c_space = st.columns([0.42, 0.58])
     with c_plot:
-        st.pyplot(plot_class_balance(df_15), width="stretch")
+        fig = plot_class_balance(df_15)
+        fig.set_size_inches(14, 5)
+        st.pyplot(fig)
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -593,7 +595,7 @@ elif page == "dataset":
         }
     )
     st.markdown('<div class="label">Binary mapping used</div>', unsafe_allow_html=True)
-    st.dataframe(mapping_df, width="stretch", height=180)
+    st.dataframe(mapping_df, height=180)
 
 # =========================================================
 # PAGE: MASKING
@@ -664,22 +666,20 @@ elif page == "features":
             '<div class="label">Categories in features_reduced_corr.csv</div>',
             unsafe_allow_html=True,
         )
-        st.dataframe(all_counts, width="stretch", height=220)
-        st.pyplot(
-            plot_category_counts(all_counts, "Category distribution (corr-reduced)"),
-            width="stretch",
-        )
+        st.dataframe(all_counts, height=220)
+        fig = plot_category_counts(all_counts, "Category distribution (corr-reduced)")
+        fig.set_size_inches(14, 5)  # Breite/Höhe anpassen
+        st.pyplot(fig)
 
     with c2:
         st.markdown(
             '<div class="label">Categories in features_reduced_15.csv</div>',
             unsafe_allow_html=True,
         )
-        st.dataframe(f15_counts, width="stretch", height=220)
-        st.pyplot(
-            plot_category_counts(f15_counts, "Category distribution (final 15)"),
-            width="stretch",
-        )
+        st.dataframe(f15_counts, height=220)
+        fig = plot_category_counts(f15_counts, "Category distribution (final 15)")
+        fig.set_size_inches(14, 5)  # Breite/Höhe anpassen
+        st.pyplot(fig)
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -701,7 +701,7 @@ The final ML set preserves this multivariate signal while removing redundant pre
         '<div class="label">Feature table preview (corr-reduced)</div>',
         unsafe_allow_html=True,
     )
-    st.dataframe(df_all_disp.head(18), width="stretch", height=300)
+    st.dataframe(df_all_disp.head(18), height=300)
 
 # =========================================================
 # PAGE: REDUCE TO 15
@@ -761,7 +761,7 @@ elif page == "reduce":
     fig = heatmap_with_labels(
         corr, cols, title=f"Correlation heatmap (top {heatmap_n} by variance)"
     )
-    st.pyplot(fig, width="stretch")
+    st.pyplot(fig)
 
     corr_features = [c for c in df_all.columns if c != "target"]
     final_features_list = [c for c in df_15.columns if c != "target"]
@@ -790,23 +790,19 @@ elif page == "reduce":
         st.markdown(
             '<div class="label">Set comparison summary</div>', unsafe_allow_html=True
         )
-        st.dataframe(summary, width="stretch", height=180)
+        st.dataframe(summary, height=180)
         st.markdown(
             '<div class="label">Removed features (preview)</div>',
             unsafe_allow_html=True,
         )
-        st.dataframe(
-            pd.DataFrame({"Removed": removed[:35]}), width="stretch", height=300
-        )
+        st.dataframe(pd.DataFrame({"Removed": removed[:35]}), height=300)
 
     with cB:
         st.markdown(
             '<div class="label">Final 15 features (used for ML)</div>',
             unsafe_allow_html=True,
         )
-        st.dataframe(
-            pd.DataFrame({"Final 15": final_features_list}), width="stretch", height=360
-        )
+        st.dataframe(pd.DataFrame({"Final 15": final_features_list}), height=360)
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -852,7 +848,7 @@ elif page == "ml":
                 "Path": [str(FEATURES_ALL_PATH), str(FEATURES_15_PATH)],
             }
         )
-        st.dataframe(export_df, width="stretch", height=150)
+        st.dataframe(export_df, height=150)
 
         st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
         st.markdown(
@@ -868,4 +864,4 @@ elif page == "ml":
             '<div class="label">Final dataset preview (15 + target)</div>',
             unsafe_allow_html=True,
         )
-        st.dataframe(df_15_disp.head(22), width="stretch", height=420)
+        st.dataframe(df_15_disp.head(22), height=420)

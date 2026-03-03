@@ -13,7 +13,7 @@ from sklearn.metrics import classification_report
 # =========================================================
 # PAGE CONFIG
 # =========================================================
-st.set_page_config(page_title="Classical ML", layout="wide")
+st.title("Classical ML")
 
 # =========================================================
 # PATHS (robust, repo-relative)
@@ -146,6 +146,58 @@ def _safe_crosstab(y_true, y_pred):
     )
 
 
+def _align_y_pred_to_y_true(y_true, y_pred):
+    """
+    Make y_pred label type compatible with y_true for metrics/crosstab.
+    Common case here: y_true = ['COVID','Non-COVID'], y_pred = [0,1]
+    """
+    y_true_s = pd.Series(y_true).copy()
+    y_pred_s = pd.Series(y_pred).copy()
+
+    # If true labels are strings and preds are numeric -> map 0/1 to class names
+    if y_true_s.dtype == object and pd.api.types.is_numeric_dtype(y_pred_s):
+        int_to_str = {0: "Non-COVID", 1: "COVID"}
+        mapped = y_pred_s.map(int_to_str)
+
+        # fallback if unexpected values occur
+        if mapped.isna().any():
+            mapped = mapped.fillna(y_pred_s.astype(str))
+
+        y_pred_s = mapped
+
+    # If true labels are numeric and preds are strings -> map to 0/1
+    elif pd.api.types.is_numeric_dtype(y_true_s) and y_pred_s.dtype == object:
+        str_to_int = {
+            "non-covid": 0,
+            "normal": 0,
+            "covid": 1,
+            "covid-19": 1,
+        }
+        y_pred_s = y_pred_s.astype(str).str.strip().str.lower().map(str_to_int)
+
+    return y_true_s, y_pred_s
+
+
+def _extract_model_with_predict(obj):
+    """Extract actual estimator from loaded pickle/bundle/list/dict."""
+    if hasattr(obj, "predict"):
+        return obj
+
+    if isinstance(obj, dict):
+        for key in ["model", "classifier", "estimator", "xgb_model", "pipeline"]:
+            if key in obj and hasattr(obj[key], "predict"):
+                return obj[key]
+
+    if isinstance(obj, (list, tuple)):
+        for item in obj:
+            if hasattr(item, "predict"):
+                return item
+
+    raise TypeError(
+        f"Loaded object is not a model with .predict(). Got type: {type(obj)}"
+    )
+
+
 def _try_helper_knn_predict() -> Tuple[dict, pd.DataFrame]:
     if knn_pickle_run is None:
         raise RuntimeError(f"KNN helper import failed: {KNN_HELPER_IMPORT_ERROR}")
@@ -172,8 +224,12 @@ def _predict_knn_local() -> Tuple[dict, pd.DataFrame]:
     X_test_scaled = scaler.transform(X_test)
 
     y_pred = model.predict(X_test_scaled)
-    report = classification_report(y_test, y_pred, output_dict=True)
-    ct = _safe_crosstab(y_test, y_pred)
+
+    # Align labels for metrics/crosstab (e.g., y_test strings vs y_pred 0/1)
+    y_true_eval, y_pred_eval = _align_y_pred_to_y_true(y_test, y_pred)
+
+    report = classification_report(y_true_eval, y_pred_eval, output_dict=True)
+    ct = _safe_crosstab(y_true_eval, y_pred_eval)
     return report, ct
 
 
@@ -185,29 +241,58 @@ def safe_knn_predict() -> Tuple[dict, pd.DataFrame]:
 
 
 def _xgb_model_candidates() -> List[Path]:
-    patterns = [
-        "xgb*.pkl",
-        "xgboost*.pkl",
-        "*xgb*.pkl",
-    ]
+    patterns = ["xgb*.pkl", "xgboost*.pkl", "*xgb*.pkl"]
     cands: List[Path] = []
+
     for pat in patterns:
         cands.extend(MODELS_DIR.glob(pat))
-    # remove obvious non-model helper files
-    cleaned = []
+
+    # dedupe + filter obvious non-model artifacts
+    excluded_keywords = [
+        "feature",
+        "features",
+        "columns",
+        "scaler",
+        "metrics",
+        "proba",
+        "report",
+    ]
+
+    cleaned: List[Path] = []
     for p in sorted(set(cands)):
-        if p.name in {"xgb_pickle_run.py"}:
+        name_lower = p.name.lower()
+
+        if p.suffix != ".pkl":
             continue
-        if p.suffix == ".pkl":
-            cleaned.append(p)
+        if name_lower == "xgb_pickle_run.py":
+            continue
+        if any(k in name_lower for k in excluded_keywords):
+            continue
+
+        cleaned.append(p)
+
+    # rank likely model names first
+    def _score(path: Path) -> int:
+        n = path.name.lower()
+        if n == "xgboost_model.pkl":
+            return 0
+        if n == "xgb_model.pkl":
+            return 1
+        if "model" in n:
+            return 2
+        return 10
+
+    cleaned = sorted(cleaned, key=_score)
     return cleaned
 
 
 def _predict_xgb_local(threshold: float = 0.5) -> Tuple[dict, pd.DataFrame]:
     """
     Fallback XGBoost prediction:
-    - tries to locate an XGB model pickle in /models
+    - locates an XGB model pickle in /models
+    - extracts estimator if pickle contains bundle/list/dict
     - uses predict_proba if available and applies threshold
+    - aligns labels (y_true strings vs y_pred ints) for metrics/crosstab
     """
     xgb_candidates = _xgb_model_candidates()
     if not xgb_candidates:
@@ -215,7 +300,7 @@ def _predict_xgb_local(threshold: float = 0.5) -> Tuple[dict, pd.DataFrame]:
             "No XGBoost pickle found in models/. Expected something like xgb*.pkl"
         )
 
-    model_path = xgb_candidates[0]  # best-effort
+    model_path = xgb_candidates[0]  # best-ranked candidate
     scaler_path = MODELS_DIR / "scaler.pkl"
     x_test_path = DATA_DIR / "X_test.csv"
     y_test_path = DATA_DIR / "y_test.csv"
@@ -225,7 +310,10 @@ def _predict_xgb_local(threshold: float = 0.5) -> Tuple[dict, pd.DataFrame]:
     if missing:
         raise FileNotFoundError("Missing XGB fallback files:\n" + "\n".join(missing))
 
-    model = joblib.load(model_path)
+    # Load model (may be actual model OR bundle/list/dict)
+    loaded_obj = joblib.load(model_path)
+    model = _extract_model_with_predict(loaded_obj)
+
     scaler = joblib.load(scaler_path)
 
     X_test = pd.read_csv(x_test_path)
@@ -234,19 +322,26 @@ def _predict_xgb_local(threshold: float = 0.5) -> Tuple[dict, pd.DataFrame]:
 
     if hasattr(model, "predict_proba"):
         proba = model.predict_proba(X_test_scaled)
-        # positive class probability = column 1 if binary
-        if getattr(proba, "shape", None) is not None and proba.shape[1] >= 2:
+
+        # binary classification -> positive class usually column 1
+        if (
+            getattr(proba, "shape", None) is not None
+            and len(proba.shape) > 1
+            and proba.shape[1] >= 2
+        ):
             p_pos = proba[:, 1]
         else:
-            # unusual case
-            p_pos = proba.ravel()
+            p_pos = pd.Series(proba).astype(float).values
+
         y_pred = (p_pos >= threshold).astype(int)
     else:
-        # fallback without threshold support
         y_pred = model.predict(X_test_scaled)
 
-    report = classification_report(y_test, y_pred, output_dict=True)
-    ct = _safe_crosstab(y_test, y_pred)
+    # Align labels for metrics/crosstab (e.g. y_test strings vs y_pred 0/1)
+    y_true_eval, y_pred_eval = _align_y_pred_to_y_true(y_test, y_pred)
+
+    report = classification_report(y_true_eval, y_pred_eval, output_dict=True)
+    ct = _safe_crosstab(y_true_eval, y_pred_eval)
     return report, ct
 
 
@@ -269,20 +364,25 @@ def display_cr_cm(report_dict, ct):
     st.write("")
 
     ct_norm = ct.div(ct.sum(axis=1), axis=0)
-    fig, ax = plt.subplots(figsize=(3, 2))
+
+    # ✅ CM bewusst kompakt halten
+    fig, ax = plt.subplots(figsize=(6, 4), dpi=120)
     sns.heatmap(
         ct_norm,
         annot=True,
         fmt=".2%",
         cmap="Greens",
         ax=ax,
-        annot_kws={"size": 7},
+        annot_kws={"size": 9},
         cbar_kws={"shrink": 0.8},
     )
-    ax.set_title("Normalized Confusion Matrix", fontsize=8)
-    ax.tick_params(axis="both", which="major", labelsize=6)
+    ax.set_title("Normalized Confusion Matrix", fontsize=10)
+    ax.tick_params(axis="both", which="major", labelsize=9)
     plt.tight_layout()
-    st.pyplot(fig, use_container_width=False)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.pyplot(fig)
     plt.close(fig)
 
 
@@ -423,7 +523,7 @@ all_metrics_df = get_all_baseline_metrics()
 # =========================================================
 # UI
 # =========================================================
-st.title("Covid-19 Diagnosis Using Chest X-Rays")
+st.subheader("Covid-19 Diagnosis Using Chest X-Rays")
 st.sidebar.title("Table of contents")
 pages = ["Baseline Models", "Summary"]
 page = st.sidebar.radio("Go to", pages)
