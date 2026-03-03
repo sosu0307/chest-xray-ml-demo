@@ -5,7 +5,7 @@ import streamlit as st
 # =========================================================
 # Page config
 # =========================================================
-st.set_page_config(page_title="Conclusion & Questions", layout="wide")
+st.title("Conclusion & Questions")
 
 # =========================================================
 # Paths (robust for src/streamlit/pages/)

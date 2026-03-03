@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 
-st.set_page_config(page_title="Deep Learning", layout="wide")
+st.title("Deep Learning")
 
 # =========================================================
 # Paths (robust if script is inside src/streamlit/pages/)

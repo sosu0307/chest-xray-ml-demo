@@ -4,11 +4,6 @@ import pandas as pd
 from pathlib import Path
 
 # =========================================================
-# PAGE CONFIG
-# =========================================================
-st.set_page_config(page_title="Training Curves", layout="wide")
-
-# =========================================================
 # Paths (robust if script is inside src/streamlit/pages/)
 # =========================================================
 _THIS_FILE = Path(__file__).resolve()
@@ -307,7 +302,7 @@ c1, c2 = st.columns(2, gap="large")
 
 with c1:
     st.markdown('<div class="plot-card">', unsafe_allow_html=True)
-    fig1, ax1 = plt.subplots(figsize=(6.6, 4.2))
+    fig1, ax1 = plt.subplots(figsize=(5.2, 3.4))
     ax1.plot(epochs, train_loss, marker="o", label="train_loss")
     ax1.plot(epochs, val_loss, marker="o", label="val_loss")
     ax1.axvline(
@@ -323,12 +318,12 @@ with c1:
     ax1.grid(True, alpha=0.25)
     ax1.legend(fontsize=8)
     fig1.tight_layout()
-    st.pyplot(fig1, use_container_width=True)
+    st.pyplot(fig1)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with c2:
     st.markdown('<div class="plot-card">', unsafe_allow_html=True)
-    fig2, ax2 = plt.subplots(figsize=(6.6, 4.2))
+    fig2, ax2 = plt.subplots(figsize=(5.2, 3.4))
     ax2.plot(epochs, val_f1, marker="o", label="val_f1")
     ax2.axvline(
         best_epoch, linestyle="--", linewidth=1.5, label=f"best epoch = {best_epoch}"
@@ -348,7 +343,7 @@ with c2:
     ax2.grid(True, alpha=0.25)
     ax2.legend(fontsize=8)
     fig2.tight_layout()
-    st.pyplot(fig2, use_container_width=True)
+    st.pyplot(fig2)
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================================================
